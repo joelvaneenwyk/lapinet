@@ -9,6 +9,14 @@ This repository publishes two distinct implementations:
 
 Both are static HTML/JavaScript/WGSL applications. No Python, external API, or cloud model is required. Run a local HTTP server or deploy over HTTPS; a WebGPU-capable browser is required.
 
+## Run online
+
+**[Reversible Springs & Boids](https://alleycatsphinx.github.io/lapinet/springs.html)**
+
+**[Integrated E8/H4 Scheduled Lattice Simulation](https://alleycatsphinx.github.io/lapinet/)**
+
+Both use WebGPU over HTTPS and need no Python, Node, or external simulation server on the visitor's machine.
+
 ## Run
 
 ```sh
