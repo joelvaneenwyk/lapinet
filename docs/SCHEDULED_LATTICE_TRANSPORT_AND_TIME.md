@@ -24,20 +24,20 @@ A channel chooses one lattice root `r_c`. Coordinates change by exact modular in
 
 The WGSL kernel defines an integer gate invariant `g(k,c)` from the current modular coordinates `k`, E8 Gram matrix, and chosen root, and evaluates:
 
-\[
+$$
 \theta_n(k,c)
 = \bigl(g(k,c)+n\,s+\mathrm{seed}\bigr)\bmod 4096 .
-\]
+$$
 
 With threshold `h` (configured in the range `0..4096`):
 
-\[
+$$
 T_n(k,c)=
 \begin{cases}
 (k+r_c \pmod{4096},\,c),&\theta_n(k,c)<h\\
 (k,c),&\text{otherwise}.
 \end{cases}
-\]
+$$
 
 Inverse transport uses the **same event index** and corresponding inverse root operation, with the gate designed to agree across that transition. The actual GPU shader has extra steering-dependent channel selection and checks whether the projected locality cell changed.
 
@@ -70,9 +70,9 @@ inverse flock shears, using the same post-stream neighborhood
 
 At the group-theoretic level, if `U_n = F_n ∘ T_n ∘ C_n`, then
 
-\[
+$$
 U_n^{-1}=C_n^{-1}\circ T_n^{-1}\circ F_n^{-1}.
-\]
+$$
 
 The ordering is essential. A reverse button that simply negated a floating velocity while retaining a dissipative alignment pass would **not** satisfy this contract.
 
@@ -105,9 +105,9 @@ The golden E8→H3 and H4 quaternion/Hopf visual overlays in this page are **not
 
 A mathematically honest replacement for `Δt` is a **transition order** `n`, with state
 
-\[
+$$
 S_{n+1}=U_n(S_n),\qquad S_n=U_n^{-1}(S_{n+1}).
-\]
+$$
 
 No numerical time interval is required by `U_n`. A separate application may choose an increasing map `t=\tau(n)` that assigns event timestamps or rates; it is *not part of the lattice transport map*. In the app, `playbackHz` chooses how quickly the host submits scheduled events; changing that affects wall-clock progress, not the exact state reached after the same sequence of events.
 

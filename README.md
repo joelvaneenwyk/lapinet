@@ -29,9 +29,9 @@ In the spring demo, select **Flock demo**, adjust the live coefficients, and use
 
 The integrated engine stores discrete packed E8 lattice records. For an integer schedule index `n`, root channel `c`, and state `k`, it evaluates
 
-\[
+$$
 \theta_n(k,c)=\bigl(g(k,c)+n\,s+\mathrm{seed}\bigr)\bmod 4096.
-\]
+$$
 
 When `θ_n < threshold`, the corresponding root transition occurs; otherwise the record is unchanged. Exact-site collision operations and reversible flock updates compose in a prescribed order; running those inverse operations in reverse order restores the state.
 
@@ -44,7 +44,7 @@ When `θ_n < threshold`, the corresponding root transition occurs; otherwise the
 - **Scheduled E8:** 240 directed root channels; eight modular 12-bit coefficients packed with channel into a 16-byte GPU record; deterministic root transitions and exact-site collision scheduling.
 - **Scheduled H4 steering:** a 120-direction alphabet over two radial shells, 17 sign-compatible direction candidates per orthant, and four-component steering/hidden reservoirs wrapped modulo `2^18`.
 - **Locality:** symmetric ±4-neighbor fan in deterministic R4 Morton order, rather than all-pairs search for the integrated flock path.
-- **Reversible springs/boids:** integer shears, position-dependent kicks, and invertible drift/reflection. Pairwise cohesion/separation conserve particle momentum under bounded arithmetic; externally imposed goal steering need not.
+- **Reversible springs/boids:** integer shears, position-dependent kicks, and invertible drift/reflection. Pairwise cohesion/separation conserve particle momentum under bounded arithmetic; optional externally imposed goal steering need not.
 - **Visualization:** the E8→H3 six-axis golden projection and H4 quaternion/Hopf views are labeled separately. Their 3D overlays do not define the simulation collision metric.
 
 ## Reproducibility
