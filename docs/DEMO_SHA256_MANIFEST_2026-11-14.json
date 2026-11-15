@@ -1,0 +1,118 @@
+{
+  "date": "2026-11-14",
+  "files": [
+    {
+      "bytes": 11225,
+      "path": "docs/REVERSIBLE_DEMO_PROVENANCE_2026-11-14.md",
+      "sha256": "e010d1f6ec6b3bb0685a8b40aec3a1fb589ad003e3fbcc692bfe42cc38cedb44"
+    },
+    {
+      "bytes": 8610,
+      "path": "springs.html",
+      "sha256": "6913573db197839bf01856ee8719f98d2ebb8f0d7cc241c2ee4df81832dbe964"
+    },
+    {
+      "bytes": 3319,
+      "path": "src/systems/reversible-springs/downprojected-e8-h3-lattice.mjs",
+      "sha256": "e7498a114b74881781df8a139682f84dc30ef6ca673860ae326253d2a92b0d33"
+    },
+    {
+      "bytes": 5550,
+      "path": "src/systems/reversible-springs/downprojected-h4-lattice.mjs",
+      "sha256": "f2ea414a23cb887af1322298d85f3fb955493d16e5bf645013049c8eaada8eff"
+    },
+    {
+      "bytes": 6654,
+      "path": "src/systems/reversible-springs/flock-cpu.mjs",
+      "sha256": "6494784eb9a2c398c41f2c84b03d1f6797b8bfaf393583b339e051b97db56550"
+    },
+    {
+      "bytes": 8894,
+      "path": "src/systems/reversible-springs/flock-gpu.js",
+      "sha256": "dddd1cfec0ee5fc01ae6cfaff106a346f0d2a16e5b485c32dafe802ffa3f42ad"
+    },
+    {
+      "bytes": 4779,
+      "path": "src/systems/reversible-springs/flock.wgsl",
+      "sha256": "22ada301422dd22e0c1ce29a99f91f55998900669d3639cd6b2b2d6e101b5fab"
+    },
+    {
+      "bytes": 10845,
+      "path": "src/systems/reversible-springs/springs-cpu.mjs",
+      "sha256": "732ade11bfc5fe3d120cd07f4bd809fa7ba5a5a82cfffff2144e9710c22d9827"
+    },
+    {
+      "bytes": 7239,
+      "path": "src/systems/reversible-springs/springs-gpu.js",
+      "sha256": "9d232a1258d459350b8b7d5147445914c41bc2bf399bb72ee980b5d3358b78c5"
+    },
+    {
+      "bytes": 6983,
+      "path": "src/systems/reversible-springs/springs-render.wgsl",
+      "sha256": "d283d7e806110834983503e8059afec4d2df1beb5656a08d14d56afd37289119"
+    },
+    {
+      "bytes": 2190,
+      "path": "src/systems/reversible-springs/springs-timeline.mjs",
+      "sha256": "96753e65ec3342cc9af52529169cf5d8b646e2daab7d1f7c75aae2703da822d3"
+    },
+    {
+      "bytes": 983,
+      "path": "src/systems/reversible-springs/springs-trails.wgsl",
+      "sha256": "bf3683eb50595fd0c8d0d97ece8fb4b72189c435969c14f074e8a4b6e959d873"
+    },
+    {
+      "bytes": 28463,
+      "path": "src/systems/reversible-springs/springs-view.js",
+      "sha256": "5992eb2c2dc4da8837651cc80fc06c4ae73b604cec37c990aef570b36d2998d3"
+    },
+    {
+      "bytes": 1934,
+      "path": "src/systems/reversible-springs/springs.wgsl",
+      "sha256": "0d8adda986d0e91299febd43d1d0e6426d5a02263316647120da74ad7aa483ea"
+    },
+    {
+      "bytes": 6287,
+      "path": "src/systems/reversible-springs/validate-demo-webgpu.mjs",
+      "sha256": "e3f4445d0c114f7320da09ae564eefe1f892ea7ed4c240646863a24e6e0eddcf"
+    },
+    {
+      "bytes": 8072,
+      "path": "src/systems/reversible-springs/validate-flock-webgpu.mjs",
+      "sha256": "b2f26a347fcd7f5c94935f57eb4fba21526d3dbf74638c8a90c0a28a8a03a3f2"
+    },
+    {
+      "bytes": 4830,
+      "path": "src/systems/reversible-springs/validate-springs-webgpu.mjs",
+      "sha256": "902597e4db3a8505e82b56ab52ebac2be47a17b54a440f4c5a2362aa2debbd64"
+    },
+    {
+      "bytes": 1945,
+      "path": "tests/public-demo-defaults.mjs",
+      "sha256": "abe423e40970e263d7856722db6514a2a0dacf6779f66afda72b14aad2484a17"
+    },
+    {
+      "bytes": 21820,
+      "path": "tests/reversible-springs.mjs",
+      "sha256": "c99f1164ac1359907435d126a59474e2f17573d79c9f8d0c8b31dcd41dcfabed"
+    }
+  ],
+  "root_provenance": {
+    "baseline": "Cycles/work/noether-h4-62/baseline/noether024-sandbox/src/noether-h4-exact.js",
+    "baseline_sha256": "a631c74f6e59d8971801ab05011d566927bc72f25473ed3d9e19a696a5596975",
+    "e8_h3_golden_axes": {
+      "cycles_source": "Cycles/work/Crystals/src/camera-presets.js",
+      "e8_multiplicity_sha256": "acc842a0793aea741f33919e2bc965f3f5f484eda64868e727877e1b72ff9345",
+      "e8_multiplicity_source": "Cycles/work/metis/E8_H3_B3_RESEARCH_CHECKPOINT_2026-10-08.md",
+      "q24_algebra_sha256": "cd3ae731a0167e04ca9295a65515650de3d0bc52b12ad5c06a6a334e8fc42af7",
+      "q24_algebra_source": "Cycles/work/Crystals/Q24_TABLE_FREE_ALGEBRA.md",
+      "sha256": "000033af9b193c1c55c42fb0649af5aa74c427384509aa3be5738c58d7d6c077",
+      "source_revisions_committed": false
+    },
+    "source": "Cycles/work/noether-h4-62/h4-8d-core.mjs",
+    "source_revisions_committed": false,
+    "source_sha256": "4f3d6f6db8fffe6ab407f09e7a1a67c47f8ee055a2d7bb60fc3c8032b402ccfe"
+  },
+  "schema": "lapinet.source-fingerprint.v1",
+  "status": "local unsigned development snapshot - not proof of ownership"
+}

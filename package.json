@@ -1,0 +1,13 @@
+{
+  "name": "lapinet",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node --check src/main.js && node --check src/version.js && node --check src/config/config-schema.js && node --check src/config/config-system.js && node --check src/config/config-ui.js && node --check src/config/config-state-store.js && node --check src/display/display-layout.js && node --check src/display/display-system.js && node --check src/display/displays-ui.js && node --check scripts/static-server.mjs && node --check scripts/capture-server.mjs && node --check scripts/validate-scs-webgpu.mjs && node --check scripts/validate-particles-webgpu.mjs && node --check scripts/validate-implicit-webgpu.mjs && node --check src/diagnostics/diagnostics-registry.js && node --check src/diagnostics/frame-capture.js && node --check src/diagnostics/frame-capture-ui.js && node --check src/diagnostics/kernel-diagnostics-ui.js && node --check src/diagnostics/render-target-diagnostics-ui.js && node --check src/diagnostics/runtime-connections-ui.js && node --check src/gpu/gpu-context.js && node --check src/gpu/resources.js && node --check src/gpu/resource-registry.js && node --check src/gpu/scheduler.js && node --check src/systems/system-contract.js && node --check src/input/pointer-state.js && node --check src/input/control-hotkeys.js && node --check src/primitives/primitive-source.js && node --check src/scene/primitive-test-scene.js && node --check src/fields/fractal-field.js && node --check src/fields/comet-field.js && node --check src/render/camera.js && node --check src/render/camera-controls.js && node --check src/render/gbuffer.js && node --check src/render/implicit/implicit-surface-pass.js && node --check src/render/deferred/deferred-lighting-pass.js && node --check src/render/diagnostics/render-target-debug-pass.js && node --check src/render/primitives/primitive-layer-pass.js && node --check src/render/particles/simulation-particle-pass.js && node --check src/render/cursor/cursor-pass.js && node --check src/render/render-surface.js && for f in src/gpu/scs/*.js src/systems/scs/*.js src/fields/none-field.js src/fields/plane-field.js; do node --check \"$f\" || exit 1; done",
+    "test": "node --test tests/*.mjs",
+    "validate:scs": "deno run --allow-read --unstable-webgpu scripts/validate-scs-webgpu.mjs",
+    "validate:implicit": "deno run --allow-read --unstable-webgpu scripts/validate-implicit-webgpu.mjs",
+    "capture:server": "node scripts/capture-server.mjs",
+    "validate:particles": "deno run --allow-read --unstable-webgpu scripts/validate-particles-webgpu.mjs"
+  }
+}

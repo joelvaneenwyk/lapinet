@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Lapinet · Reversible Springs</title>
+<style>
+:root{color-scheme:dark;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:#101824;color:#dce7f4}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:flex;flex-direction:column}
+header{padding:15px 20px;border-bottom:1px solid #2a3545;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
+h1{font-size:17px;margin:0;font-weight:650;letter-spacing:.02em}
+sub{font-size:11px;color:#9fb5c8}
+a{color:#8bbad4}
+.controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:12px 20px;border-bottom:1px solid #2a3545;background:#131e2a}
+button,select,input{background:#263445;color:#e8f0f7;border:1px solid #405369;border-radius:5px;padding:7px 9px;font:inherit}
+button{cursor:pointer}
+button:hover{background:#32485c}
+button:disabled{opacity:.45;cursor:default}
+button.primary,button[aria-pressed="true"]{background:#27617a;border-color:#408ca5}
+.stats[hidden]{display:none}
+label{display:flex;align-items:center;gap:8px;font-size:12px;color:#b3c6d3}
+input[type=range]{width:100px;accent-color:#61b5ca}
+main{position:relative;flex:1;min-height:430px}
+canvas{width:100%;height:100%;position:absolute;inset:0;display:block;touch-action:none;cursor:grab}
+.stats{position:absolute;left:20px;top:18px;color:#b9d4e4;background:#111b2aca;border:1px solid #314454;border-radius:7px;padding:12px 15px;font-size:12px;line-height:1.9;pointer-events:none}
+.stats strong{color:#fff}
+footer{border-top:1px solid #2a3545;padding:11px 20px;color:#b0bfd0;font-size:11px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
+#status{max-width:850px;overflow-wrap:anywhere}
+@media(max-width:750px){header,.controls{padding:10px}main{min-height:340px}.stats{top:8px;left:8px;font-size:11px}}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>Lapinet</h1></div>
+  <nav style="display:flex;flex-wrap:wrap;gap:14px"><a href="./docs/DEMO_SHA256_MANIFEST_2026-11-14.json">Source fingerprints</a><a href="./index.html">Main Lapinet</a></nav>
+</header>
+<div class="controls">
+  <button id="play" class="primary" aria-pressed="false" title="Play forward continuously">Play</button>
+  <button id="reverse" aria-pressed="false" title="Play backward continuously to tick zero">Reverse</button>
+  <button id="flockDemo" class="primary" title="Launch two opposing, interacting particle streams with velocity vectors and trails">Flock demo</button>
+  <button id="forward" title="Advance exactly one physics tick">+1</button>
+  <button id="back" title="Reverse exactly one physics tick">−1</button>
+  <button id="forward64">+64</button>
+  <button id="back64">−64</button>
+  <button id="reset">Reset</button>
+  <button id="toggleHud" aria-pressed="true" title="Hide or show the on-canvas diagnostics panel">Hide HUD</button>
+  <button id="verify">Verify GPU ↔ CPU + rewind</button>
+  <label>Shape <select id="shape">
+    <option value="lattice" selected>Lattice</option>
+    <option value="sphere">Sphere</option>
+  </select></label>
+  <label>Connections <select id="connectivity">
+    <option value="bonded" selected>Permanent central bonds</option>
+    <option value="dynamic">Dynamic nearby contacts ≤512 particles</option>
+    <option value="flock">Reversible flocking · auxiliary momentum</option>
+    <option value="straight">Straight-line travel · no forces</option>
+  </select></label>
+  <label>Cube side (N³) <select id="grid">
+    <option value="6">6 · coarse</option>
+    <option value="8">8 · medium</option>
+    <option value="12" selected>12 · fine</option>
+    <option value="16">16 · finer</option>
+    <option value="20">20 · high</option>
+    <option value="24">24 · ultra</option>
+  </select></label>
+  <label>Coordinate precision <select id="precision">
+    <option value="8">1/8</option>
+    <option value="16">1/16</option>
+    <option value="32" selected>1/32</option>
+    <option value="64">1/64</option>
+  </select></label>
+  <label><input id="showEdges" type="checkbox" checked/>Draw connections</label>
+  <label><input id="showVelocity" type="checkbox"/>Velocity arrows (1 in 3)</label>
+  <label>Golden 8D → 3D <select id="h4Projection">
+    <option value="off">Off</option>
+    <option value="e8-q6" selected>E8 → H3 · 64-site Q6 scaffold</option>
+    <option value="e8-shell">E8 → H3 · 240-root shell</option>
+    <option value="h4-orthographic">H4 coefficient → quaternion → 3D</option>
+    <option value="h4-hopf">H4 coefficient → 3D Hopf (nonlinear)</option>
+  </select></label>
+  <label>H4 coefficient sample <select id="h4Radius">
+    <option value="2" selected>Small</option>
+    <option value="3">Medium</option>
+    <option value="4">Large</option>
+  </select></label>
+  <label><input id="showTrails" type="checkbox" checked/>Particle trails</label>
+  <label>Trail persistence <input type="range" id="trailPersistence" min="80" max="99" step="1" value="95"/><span id="trailPersistenceValue">95%</span></label>
+  <label>3D reference lattice <select id="latticeDetail">
+    <option value="0">Off</option>
+    <option value="4">Coarse</option>
+    <option value="6" selected>Medium</option>
+    <option value="8">Fine</option>
+  </select></label>
+  <label><input id="followFlock" type="checkbox" checked/>Follow flock</label>
+  <label><input id="reflectBoundary" type="checkbox" checked/>Reflective enclosure (flock) - Reset</label>
+  <label>Edge opacity <input id="edgeOpacity" type="range" min=".05" max="1" step=".05" value=".55"/><span id="opacityValue">55%</span></label>
+  <label>Spring strength · LIVE <input type="range" id="stiffness" min="0" max="64" value="20" step="1"/><span id="stiffnessValue">20</span></label>
+  <label>Rest length · LIVE <input type="range" id="restScale" min="50" max="180" value="91" step="1"/><span id="restScaleValue">91%</span></label>
+  <label>Contact radius · LIVE <input type="range" id="contactRange" min="75" max="240" value="210" step="1"/><span id="contactRangeValue">210%</span></label>
+  <label>Flock alignment · LIVE <input type="range" id="alignment" min="0" max="64" value="0" step="1"/><span id="alignmentValue">0</span></label>
+  <label>Hidden coupling · LIVE <input type="range" id="coupling" min="0" max="64" value="0" step="1"/><span id="couplingValue">0</span></label>
+  <label>Cohesion · LIVE <input type="range" id="cohesion" min="0" max="32" value="2" step="1"/><span id="cohesionValue">2</span></label>
+  <label>Separation · LIVE <input type="range" id="separation" min="0" max="32" value="6" step="1"/><span id="separationValue">6</span></label>
+  <label>Goal steering (+X) · LIVE <input type="range" id="steering" min="0" max="16" value="2" step="1"/><span id="steeringValue">2</span></label>
+  <label>Initial deformation · Reset <input type="range" id="perturb" min="0" max="48" value="15" step="1"/><span id="perturbValue">15</span></label>
+</div>
+<main>
+  <canvas id="view" aria-label="GPU particle spring crystal"></canvas>
+  <div class="stats" id="canvasHud">
+    <div>Particles <strong id="count">—</strong></div>
+    <div>Grid dimensions <strong id="gridDimensions">—</strong></div>
+    <div>Connections <strong id="edges">—</strong></div>
+    <div>Flocking contacts <strong id="flockNeighbors">—</strong></div>
+    <div>Steering waypoint <strong id="steeringGoal">—</strong></div>
+    <div style="opacity:.72">Velocity arrows: cyan +X · orange −X</div>
+    <div>Force law <strong id="forceMode">—</strong></div>
+    <div>Reflective walls <strong id="boundaryInfo">—</strong></div>
+    <div>Spatial resolution <strong id="resolutionInfo">—</strong></div>
+    <div>Reference lattice <strong id="latticeInfo">—</strong></div>
+    <div>Projected lattice <strong id="h4Info">—</strong></div>
+    <div id="projectionNote" style="opacity:.72">Amber: projected 8D source edges · blue: Cartesian reference grid</div>
+    <div>Simulation tick <strong id="ticks">0</strong></div>
+    <div>Renderer <strong>GPU instanced billboards</strong></div>
+    <div>GPU <span id="gpu">—</span></div>
+    <div>Canvas <span id="format">—</span></div>
+    <div style="opacity:.72">Drag to orbit · scroll to zoom</div>
+  </div>
+</main>
+<footer><span id="status">Initializing GPU…</span><span>8 × i32 per particle · central pairs + invertible alignment · hidden momentum state · exact rewind · v0.4</span></footer>
+<script type="module" src="./src/systems/reversible-springs/springs-view.js?v=public-preset3"></script>
+</body>
+</html>
