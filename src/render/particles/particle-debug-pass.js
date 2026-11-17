@@ -1,4 +1,10 @@
 export class ParticleDebugPass {
+  // Bindings each auto-layout pipeline actually uses (see the .wgsl):
+  // trailVertex reads globals + history; edgeVertex reads globals + records
+  // + spatialOrder; lineFragment reads globals + implicitDepth.
+  static TRAIL_BINDINGS = Object.freeze([0, 3, 4]);
+  static EDGE_BINDINGS = Object.freeze([0, 1, 2, 4]);
+
   static async create({
     device,
     format,
@@ -192,16 +198,21 @@ export class ParticleDebugPass {
         resource: this.gbuffer.views.depth,
       },
     ];
+    // Both pipelines use layout: "auto", which drops bindings an entry point
+    // never reads. Passing an entry the layout lacks invalidates the bind
+    // group, and with it the whole frame's command buffer (black screen).
+    const pick = (bindings) =>
+      entries.filter((entry) => bindings.includes(entry.binding));
 
     this.trailBindGroup = this.device.createBindGroup({
       label: "Lapinet trail overlay bindings",
       layout: this.trailPipeline.getBindGroupLayout(0),
-      entries,
+      entries: pick(ParticleDebugPass.TRAIL_BINDINGS),
     });
     this.edgeBindGroup = this.device.createBindGroup({
       label: "Lapinet edge overlay bindings",
       layout: this.edgePipeline.getBindGroupLayout(0),
-      entries,
+      entries: pick(ParticleDebugPass.EDGE_BINDINGS),
     });
     this.boundGBufferVersion = this.gbuffer.version;
   }

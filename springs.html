@@ -27,13 +27,19 @@ canvas{width:100%;height:100%;position:absolute;inset:0;display:block;touch-acti
 .stats strong{color:#fff}
 footer{border-top:1px solid #2a3545;padding:11px 20px;color:#b0bfd0;font-size:11px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
 #status{max-width:850px;overflow-wrap:anywhere}
+.views{display:flex;border:1px solid #405369;border-radius:5px;overflow:hidden}
+.views a{padding:5px 10px;text-decoration:none;color:#b3c6d3}
+.views a+a{border-left:1px solid #405369}
+.views a:hover{background:#32485c}
+.views a[aria-current="page"]{background:#27617a;color:#fff}
+.stats .perf{font-variant-numeric:tabular-nums}
 @media(max-width:750px){header,.controls{padding:10px}main{min-height:340px}.stats{top:8px;left:8px;font-size:11px}}
 </style>
 </head>
 <body>
 <header>
   <div><h1>Lapinet</h1></div>
-  <nav style="display:flex;flex-wrap:wrap;gap:14px"><a href="./docs/DEMO_SHA256_MANIFEST_2026-11-14.json">Source fingerprints</a><a href="./index.html">Main Lapinet</a></nav>
+  <nav style="display:flex;flex-wrap:wrap;align-items:center;gap:14px"><span class="views" aria-label="Lapinet views"><a href="./" title="Integrated scheduled E8/H4 lattice runtime (index.html)">E8/H4 lattice</a><a href="./springs.html" aria-current="page" title="Compact reversible springs/boids demo">Springs &amp; boids</a></span><a href="./docs/DEMO_SHA256_MANIFEST_2026-11-14.json">Source fingerprints</a></nav>
 </header>
 <div class="controls">
   <button id="play" class="primary" aria-pressed="false" title="Play forward continuously">Play</button>
@@ -121,6 +127,8 @@ footer{border-top:1px solid #2a3545;padding:11px 20px;color:#b0bfd0;font-size:11
     <div>Projected lattice <strong id="h4Info">—</strong></div>
     <div id="projectionNote" style="opacity:.72">Amber: projected 8D source edges · blue: Cartesian reference grid</div>
     <div>Simulation tick <strong id="ticks">0</strong></div>
+    <div class="perf">Playback <strong id="playState">—</strong> · <strong id="tickRate">—</strong> ticks/s</div>
+    <div class="perf">FPS <strong id="fps">—</strong> · frame <strong id="frameMs">—</strong></div>
     <div>Renderer <strong>GPU instanced billboards</strong></div>
     <div>GPU <span id="gpu">—</span></div>
     <div>Canvas <span id="format">—</span></div>
@@ -128,6 +136,6 @@ footer{border-top:1px solid #2a3545;padding:11px 20px;color:#b0bfd0;font-size:11
   </div>
 </main>
 <footer><span id="status">Initializing GPU…</span><span>8 × i32 per particle · central pairs + invertible alignment · hidden momentum state · exact rewind · v0.4</span></footer>
-<script type="module" src="./src/systems/reversible-springs/springs-view.js?v=public-preset3"></script>
+<script type="module" src="./src/systems/reversible-springs/springs-view.js?v=public-preset5"></script>
 </body>
 </html>

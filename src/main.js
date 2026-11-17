@@ -18,8 +18,24 @@ import {
   mountKernelDiagnosticsUI,
 } from "./diagnostics/kernel-diagnostics-ui.js";
 import {
+  RENDER_TARGET_OPTIONS,
   mountRenderTargetDiagnosticsUI,
 } from "./diagnostics/render-target-diagnostics-ui.js";
+import {
+  RateMeter,
+  formatMs,
+  formatRate,
+} from "./diagnostics/rate-meter.js";
+import {
+  mountStatsUI,
+} from "./diagnostics/stats-ui.js";
+import {
+  cycleOption,
+  mountViewSwitcher,
+} from "./display/view-switcher.js";
+import {
+  LAPINET_BUILD_VERSION,
+} from "./version.js";
 import {
   mountRuntimeConnectionsUI,
 } from "./diagnostics/runtime-connections-ui.js";
@@ -310,10 +326,162 @@ displays.register({
   },
 });
 
+const IMPLICIT_FIELD_OPTIONS = Object.freeze([
+  Object.freeze(["none", "None"]),
+  Object.freeze(["plane", "Plane"]),
+  Object.freeze(["fractal", "Fractal"]),
+  Object.freeze(["comet", "Comet"]),
+]);
+const renderRate = new RateMeter({ windowMs: 500 });
+const transportRate = new RateMeter({ windowMs: 500 });
+
+function describeAdapter(adapter) {
+  const info = adapter?.info ?? {};
+  return (
+    [info.vendor, info.architecture, info.description || info.device]
+      .filter(Boolean)
+      .join(" · ") || (adapter ? "WebGPU adapter" : "—")
+  );
+}
+
+function sampleStats() {
+  const now = globalThis.performance?.now?.() ?? Date.now();
+  const surface = rendererRuntime?.surface ?? null;
+  const surfaceState = surface?.state() ?? null;
+  const simulation = simulationRuntime;
+
+  const fps = renderRate.update(surfaceState?.frameIndex ?? 0, now);
+  const eventRate = transportRate.update(
+    simulation?.transportFrame ?? 0,
+    now
+  );
+
+  let rendererState = "starting";
+  if (rendererError) rendererState = "error";
+  else if (surfaceState?.manualPaused) rendererState = "paused (P)";
+  else if (surfaceState?.focusPaused) rendererState = "paused (window unfocused)";
+  else if (surfaceState?.running) rendererState = "running";
+  else if (surface) rendererState = "idle";
+
+  let simulationState = "starting";
+  if (simulationError) simulationState = "error";
+  else if (simulation?.paused) simulationState = "paused (T)";
+  else if (simulation?.running) simulationState = "running";
+  else if (simulation) simulationState = "stopped";
+
+  const size = surface?.size() ?? [canvas.width, canvas.height];
+  const ratio = Number(globalThis.devicePixelRatio) || 1;
+  const heap = globalThis.performance?.memory?.usedJSHeapSize;
+  const target = config.get("simulation.transport.playbackHz");
+
+  return [
+    {
+      title: "Renderer",
+      rows: [
+        ["State", rendererState],
+        ["FPS", formatRate(rendererState === "running" ? fps : 0)],
+        ["Frame time", formatMs(rendererState === "running" ? renderRate.period : null)],
+        ["Frames", String(surfaceState?.frameIndex ?? 0)],
+        ["Resolution", `${size[0]}×${size[1]} @${ratio.toFixed(2)}x`],
+        ["View", config.get("diagnostics.renderTarget")],
+        ["Field", config.get("render.implicit.field")],
+      ],
+    },
+    {
+      title: "Simulation",
+      rows: [
+        ["State", simulationState],
+        ["Direction", simulation?.direction ?? config.get("simulation.transport.direction")],
+        ["Transport frame n", String(simulation?.transportFrame ?? 0)],
+        ["Event rate", `${formatRate(eventRate)} / ${target} target /s`],
+        ["Particles", String(Math.floor(config.get("simulation.particles.count")))],
+        ["Flock", config.get("simulation.flock.enabled") ? "on" : "off"],
+        ["Seed · threshold", `${config.get("simulation.transport.seed")} · ${config.get("simulation.transport.threshold")}/4096`],
+      ],
+    },
+    {
+      title: "System",
+      rows: [
+        ["GPU", gpuRuntime ? describeAdapter(gpuRuntime.adapter) : "requesting…"],
+        ["Canvas format", surface?.format ?? "—"],
+        ["JS heap", heap ? (heap / 1048576).toFixed(1) + " MB" : "n/a"],
+        ["Build", LAPINET_BUILD_VERSION],
+      ],
+    },
+  ];
+}
+
+displays.register({
+  id: "stats",
+  title: "Stats",
+  position: [0.42, 0.34],
+  width: 300,
+  defaultVisible: true,
+  mount(container) {
+    mountStatsUI(container, {
+      sample: sampleStats,
+      footer:
+        "Event rate = schedule frames n per wall-clock second (not a Δt). " +
+        "Keys: ` stats · V/G view/field · P/T pause · R restart",
+    });
+  },
+});
+
 config.subscribe(() => persistConfig());
 
 displays.start();
 persistConfig();
+
+function cycleRenderView(direction) {
+  config.set(
+    "diagnostics.renderTarget",
+    cycleOption(
+      RENDER_TARGET_OPTIONS,
+      config.get("diagnostics.renderTarget"),
+      direction
+    )
+  );
+}
+
+function cycleField(direction) {
+  config.set(
+    "render.implicit.field",
+    cycleOption(
+      IMPLICIT_FIELD_OPTIONS,
+      config.get("render.implicit.field"),
+      direction
+    )
+  );
+}
+
+mountViewSwitcher({
+  document,
+  parent: workspace,
+  current: "lattice",
+  config,
+  selects: [
+    {
+      path: "diagnostics.renderTarget",
+      label: "View",
+      options: RENDER_TARGET_OPTIONS,
+      title: "Main render output: final image or a G-buffer target (V / Shift+V)",
+    },
+    {
+      path: "render.implicit.field",
+      label: "Field",
+      options: IMPLICIT_FIELD_OPTIONS,
+      title: "Implicit surface field behind the particles (G / Shift+G)",
+    },
+  ],
+  buttons: [
+    {
+      label: "Stats",
+      title: "Toggle the Stats panel (`)",
+      onClick: () => toggleDisplay("stats"),
+      pressed: () => displays.get("stats")?.visible,
+    },
+  ],
+});
 
 function toggleDisplay(id) {
   const panel = displays.get(id);
@@ -1142,6 +1310,11 @@ controlHotkeysBinding = bindControlHotkeys({
     simulationRuntime?.reset();
     rendererRuntime?.surface.renderOnce();
     diagnostics.notify();
+  },
+  onCycleRenderView: cycleRenderView,
+  onCycleField: cycleField,
+  onToggleStats() {
+    toggleDisplay("stats");
   },
 });
 

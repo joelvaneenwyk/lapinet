@@ -4,6 +4,7 @@ import {ReversibleFlockGPU} from './flock-gpu.js?v=boids1';
 import {seedMovingFlock,flockPairs} from './flock-cpu.mjs?v=boids1';
 import {generateProjectedH4Lattice} from './downprojected-h4-lattice.mjs?v=h4-1';
 import {generateProjectedE8H3Lattice} from './downprojected-e8-h3-lattice.mjs?v=e8-1';
+import {RateMeter,formatRate,formatMs} from '../../diagnostics/rate-meter.js?v=stats1';
 
 const $=id=>document.getElementById(id);
 const canvas=$('view');
@@ -432,7 +433,8 @@ function resize(){
  canvas.height=Math.max(1,Math.floor(height*ratio));
 }
 function render(){
- if(!solver||!device||!context||!renderPipeline)return;
+ // reset() destroys the old solver before awaiting the new one; skip frames in between.
+ if(loading||!solver||!device||!context||!renderPipeline)return;
  if(canvas.width<1||canvas.height<1)resize();
  const extent=Math.max(...graphSize)*solver.graph.spacing*solver.graph.precision;
  const scale=zoom*1.75/extent;
@@ -512,8 +514,24 @@ function frame(now){
    }
   }
   render();
+  renderedFrames++;
+  updatePerf(now);
  }catch(e){playing=false;note('Runtime error: '+e.message);console.error(e)}
  requestAnimationFrame(frame);
+}
+// HUD performance readout: render FPS and solver ticks/s (wall-clock cadence only).
+const fpsMeter=new RateMeter({windowMs:500}),tickMeter=new RateMeter({windowMs:500});
+let renderedFrames=0,lastPerfPaint=-Infinity;
+function updatePerf(now){
+ const fps=fpsMeter.update(renderedFrames,now);
+ const tickRate=tickMeter.update(solver?.tick||0,now);
+ if(now-lastPerfPaint<250)return;
+ lastPerfPaint=now;
+ $('fps').textContent=formatRate(fps);
+ $('frameMs').textContent=formatMs(fpsMeter.period);
+ $('tickRate').textContent=formatRate(playing?tickRate:0);
+ $('playState').textContent=loading?'loading':!solver?'—':
+  playing?(playbackDirection<0?'reverse':'forward'):'stopped';
 }
 function activateFlockDemo(){
  if(loading)return;

@@ -22,6 +22,9 @@ export function bindControlHotkeys({
   onRenderPauseToggle = () => {},
   onSimulationPauseToggle = () => {},
   onSimulationRestart = () => {},
+  onCycleRenderView = () => {},
+  onCycleField = () => {},
+  onToggleStats = () => {},
 } = {}) {
   const keyDown = (event) => {
     if (
@@ -46,6 +49,29 @@ export function bindControlHotkeys({
     if (event.code === "KeyR") {
       event.preventDefault?.();
       onSimulationRestart();
+      return;
+    }
+
+    // Modifier chords (e.g. Ctrl/Cmd+Shift+D) belong to other bindings.
+    if (event.ctrlKey || event.metaKey || event.altKey) {
+      return;
+    }
+
+    if (event.code === "KeyV") {
+      event.preventDefault?.();
+      onCycleRenderView(event.shiftKey ? -1 : 1);
+      return;
+    }
+
+    if (event.code === "KeyG") {
+      event.preventDefault?.();
+      onCycleField(event.shiftKey ? -1 : 1);
+      return;
+    }
+
+    if (event.code === "Backquote") {
+      event.preventDefault?.();
+      onToggleStats();
     }
   };
 
