@@ -1,0 +1,157 @@
+# https://taskfile.dev — run `task` to list tasks.
+# Task's built-in POSIX shell runs these commands identically on Windows, macOS and Linux.
+version: "3"
+
+vars:
+  PORT: '{{.PORT | default "1351"}}'
+  DENO_GPU: deno run --allow-read --unstable-webgpu
+
+tasks:
+  default:
+    desc: List available tasks
+    silent: true
+    cmds:
+      - task --list
+
+  serve:
+    silent: true
+    desc: "Serve the repo at http://127.0.0.1:{{.PORT}} (override with PORT=8080)"
+    aliases: [start, server]
+    interactive: true
+    env:
+      PORT: "{{.PORT}}"
+    cmds:
+      - echo "springs demo  → http://127.0.0.1:{{.PORT}}/springs.html"
+      - echo "integrated    → http://127.0.0.1:{{.PORT}}/"
+      - node scripts/static-server.mjs
+
+  capture:server:
+    desc: Start the frame-capture server
+    interactive: true
+    cmds:
+      - node scripts/capture-server.mjs
+
+  test:
+    desc: Run the Node test suite (fake GPU, no adapter needed)
+    aliases: [t]
+    cmds:
+      - node --test tests/*.mjs
+
+  check:
+    desc: Syntax-check every tracked .js/.mjs module with node --check
+    cmds:
+      - |
+        set -e
+        for f in $(git ls-files '*.js' '*.mjs'); do
+          node --check "$f"
+        done
+        echo "node --check: all modules OK"
+
+  validate:
+    desc: Run everything that doesn't need a GPU (check + test + version sync)
+    aliases: [ci]
+    cmds:
+      - task: check
+      - task: test
+      - task: version:check
+
+  version:check:
+    silent: true
+    desc: Verify src/version.js matches the ?v= tokens in index.html
+    cmds:
+      - |
+        node -e '
+        const fs = require("fs");
+        const v = /"([^"]+)"/.exec(fs.readFileSync("src/version.js", "utf8"))[1];
+        const tokens = [...fs.readFileSync("index.html", "utf8").matchAll(/\?v=([^"]+)/g)].map(m => m[1]);
+        const bad = tokens.filter(t => t !== v);
+        if (!tokens.length || bad.length) {
+          console.error(`version mismatch: src/version.js=${v}, index.html=${tokens.join(", ")}`);
+          process.exit(1);
+        }
+        console.log(`version ${v} in sync`);
+        '
+
+  gpu:
+    desc: Run all Deno WebGPU validators (needs deno + a GPU adapter)
+    preconditions:
+      - sh: command -v deno
+        msg: "deno not found — install Deno with WebGPU support to run GPU validators"
+    cmds:
+      - task: gpu:scheduled
+      - task: gpu:springs
+      - task: gpu:scs
+      - task: gpu:implicit
+      - task: gpu:particles
+
+  gpu:scheduled:
+    desc: Validate scheduled E8 stream + transport on the GPU (pass args after --)
+    cmds:
+      - "{{.DENO_GPU}} scripts/validate-scheduled-stream-webgpu.mjs {{.CLI_ARGS | default \"256 4\"}}"
+      - "{{.DENO_GPU}} scripts/validate-scheduled-transport-webgpu.mjs {{.CLI_ARGS}}"
+
+  gpu:springs:
+    desc: Validate the reversible springs/flock demo on the GPU
+    cmds:
+      - "{{.DENO_GPU}} src/systems/reversible-springs/validate-springs-webgpu.mjs"
+      - "{{.DENO_GPU}} src/systems/reversible-springs/validate-flock-webgpu.mjs"
+      - "{{.DENO_GPU}} src/systems/reversible-springs/validate-demo-webgpu.mjs"
+      - "{{.DENO_GPU}} src/systems/reversible-springs/validate-spring-render-webgpu.mjs"
+
+  gpu:scs:
+    desc: Validate R4/SCS locality kernels on the GPU
+    cmds:
+      - "{{.DENO_GPU}} scripts/validate-scs-webgpu.mjs"
+
+  gpu:implicit:
+    desc: Validate implicit-surface kernels on the GPU
+    cmds:
+      - "{{.DENO_GPU}} scripts/validate-implicit-webgpu.mjs"
+
+  gpu:particles:
+    desc: Validate particle kernels on the GPU
+    cmds:
+      - "{{.DENO_GPU}} scripts/validate-particles-webgpu.mjs"
+
+  bench:
+    desc: Run Deno WebGPU benchmarks (needs deno + a GPU adapter)
+    cmds:
+      - "{{.DENO_GPU}} scripts/benchmark-scs-webgpu.mjs"
+      - "{{.DENO_GPU}} scripts/benchmark-particles-webgpu.mjs"
+
+  sums:
+    silent: true
+    desc: Regenerate SHA256SUMS over every tracked file except itself (release step)
+    cmds:
+      - |
+        node -e '
+        const { execFileSync } = require("child_process");
+        const { createHash } = require("crypto");
+        const fs = require("fs");
+        const files = execFileSync("git", ["ls-files", "-z"], { encoding: "utf8" })
+          .split("\0").filter(f => f && f !== "SHA256SUMS")
+          .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+        const lines = files.map(f => createHash("sha256").update(fs.readFileSync(f)).digest("hex") + "  " + f);
+        fs.writeFileSync("SHA256SUMS", lines.join("\n") + "\n");
+        console.log(`SHA256SUMS: ${files.length} files`);
+        '
+      - task: sums:verify
+
+  sums:verify:
+    silent: true
+    desc: Verify files against SHA256SUMS
+    cmds:
+      - |
+        node -e '
+        const { createHash } = require("crypto");
+        const fs = require("fs");
+        let bad = 0, n = 0;
+        for (const line of fs.readFileSync("SHA256SUMS", "utf8").split("\n").filter(Boolean)) {
+          const [hash, file] = [line.slice(0, 64), line.slice(66)];
+          n++;
+          const ok = fs.existsSync(file) && createHash("sha256").update(fs.readFileSync(file)).digest("hex") === hash;
+          if (!ok) { bad++; console.error(`FAILED ${file}`); }
+        }
+        if (bad) { console.error(`${bad} of ${n} files failed`); process.exit(1); }
+        console.log(`all ${n} files OK`);
+        '
